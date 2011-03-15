@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="bridge_not_running">Nfc bridge not running.</string>
+    <string name="enable_bridge">Enable</string>
+    <string name="disable_bridge">Disable</string>
+    <string name="app_name">Nfc</string>
+</resources>
