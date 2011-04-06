@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.UUID;
 
+import edu.stanford.mobisocial.bluetooth.InsecureBluetooth;
+
 import mobisocial.nfc.NfcBridgeService.DuplexSocket;
 
 import android.bluetooth.BluetoothAdapter;
@@ -60,7 +62,7 @@ public class NfcBluetoothBridge implements NfcBridge {
 
 			// Create a new listening server socket
 			try {
-				tmp = mBtAdapter.listenUsingInsecureRfcommWithServiceRecord("NfcHandover", mServiceUuid);
+				tmp = InsecureBluetooth.listenUsingRfcommWithServiceRecord(mBtAdapter, "NfcHandover", mServiceUuid, false);
 			} catch (IOException e) {
 				System.err.println("Could not open server socket");
 				e.printStackTrace(System.err);

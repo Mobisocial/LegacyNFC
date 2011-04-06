@@ -28,13 +28,14 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
-import android.nfc.NfcAdapter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.util.Log;
 
 public class NfcBridgeService extends Service implements NdefProxy {
+	private static final String EXTRA_NDEF_MESSAGES =  "android.nfc.extra.NDEF_MESSAGES";
+	
 	private static final String TAG = NfcBridgeActivity.TAG;
 	private static NfcBridge mNfcBridge = null;
 	private NotificationManager mNotificationManager;
@@ -155,8 +156,8 @@ public class NfcBridgeService extends Service implements NdefProxy {
 	BroadcastReceiver mSetNdefReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.hasExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)) {
-				Parcelable[] messages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+			if (intent.hasExtra(EXTRA_NDEF_MESSAGES)) {
+				Parcelable[] messages = intent.getParcelableArrayExtra(EXTRA_NDEF_MESSAGES);
 				mForegroundMessage = (NdefMessage)messages[0];
 			} else {
 				mForegroundMessage = null;
@@ -167,8 +168,8 @@ public class NfcBridgeService extends Service implements NdefProxy {
 	public void handleNdef(NdefMessage ndef) {
     	Intent handleNdefIntent = new Intent(ACTION_HANDLE_NDEF);
     	Parcelable[] messages = new Parcelable[] { ndef };
-    	handleNdefIntent.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, messages);
-    	sendOrderedBroadcast(handleNdefIntent, Manifest.permission.NFC, mNdefReceiver, null, Activity.RESULT_OK, null, null);
+    	handleNdefIntent.putExtra(EXTRA_NDEF_MESSAGES, messages);
+    	sendOrderedBroadcast(handleNdefIntent, "android.permission.NFC", mNdefReceiver, null, Activity.RESULT_OK, null, null);
 	}
 	
 	private BroadcastReceiver mNdefReceiver = new BroadcastReceiver() {
@@ -178,7 +179,7 @@ public class NfcBridgeService extends Service implements NdefProxy {
 				return;
 			}
 
-			Parcelable[] messages = inboundIntent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+			Parcelable[] messages = inboundIntent.getParcelableArrayExtra(EXTRA_NDEF_MESSAGES);
 			NdefMessage ndef = (NdefMessage)messages[0];
 			NdefRecord firstRecord = ndef.getRecords()[0];
 	    	Notification notification = null;

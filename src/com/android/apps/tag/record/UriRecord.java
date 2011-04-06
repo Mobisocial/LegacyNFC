@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.nfc.NdefRecord;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
@@ -125,8 +126,12 @@ public class UriRecord {
     /** Parse and absolute URI record */
     private static UriRecord parseAbsolute(NdefRecord record) {
         byte[] payload = record.getPayload();
-        Uri uri = Uri.parse(new String(payload, Charset.forName("UTF-8")));
-        return new UriRecord(uri);
+        try {
+        	Uri uri = Uri.parse(new String(payload, "UTF-8"));
+            return new UriRecord(uri);
+        } catch(UnsupportedEncodingException e) {
+        	throw new RuntimeException(e);
+        }
     }
 
     /** Parse an well known URI record */
@@ -144,12 +149,18 @@ public class UriRecord {
          */
 
         String prefix = URI_PREFIX_MAP.get(payload[0]);
-        byte[] fullUri = Bytes.concat(
-                prefix.getBytes(Charset.forName("UTF-8")),
-                Arrays.copyOfRange(payload, 1, payload.length));
-
-        Uri uri = Uri.parse(new String(fullUri, Charset.forName("UTF-8")));
-        return new UriRecord(uri);
+        byte[] sub = new byte[payload.length - 1];
+        System.arraycopy(payload, 1, sub, 0, payload.length - 1);
+        
+        try {
+	        byte[] fullUri = Bytes.concat(
+	                prefix.getBytes("UTF-8"), sub);
+	
+	        Uri uri = Uri.parse(new String(fullUri, "UTF-8"));
+	        return new UriRecord(uri);
+        } catch(UnsupportedEncodingException e ) {
+        	throw new RuntimeException(e);
+        }
     }
 
     public static boolean isUri(NdefRecord record) {
@@ -167,7 +178,12 @@ public class UriRecord {
      * Convert a {@link Uri} to an {@link NdefRecord}
      */
     public static NdefRecord newUriRecord(Uri uri) {
-        byte[] uriBytes = uri.toString().getBytes(Charset.forName("UTF-8"));
+        byte[] uriBytes;
+        try {
+        	uriBytes = uri.toString().getBytes("UTF-8");
+        } catch(UnsupportedEncodingException e) {
+        	throw new RuntimeException(e);
+        }
 
         /*
          * We prepend 0x00 to the bytes of the URI to indicate that this
