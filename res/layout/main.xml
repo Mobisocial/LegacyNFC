@@ -9,11 +9,19 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	>
+
 <Button
 	android:id="@+id/toggle"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Enable Nfc bridge"
+	android:text="Enable Nfc"
+/>
+
+<Button
+	android:id="@+id/config"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Configuration Code"
 />
 
 </LinearLayout>

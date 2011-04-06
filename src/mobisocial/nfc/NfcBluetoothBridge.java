@@ -60,7 +60,11 @@ public class NfcBluetoothBridge implements NfcBridge {
 
 			// Create a new listening server socket
 			try {
-				tmp = mBtAdapter.listenUsingInsecureRfcommWithServiceRecord("NfcHandover", mServiceUuid);
+				try {
+					tmp = mBtAdapter.listenUsingInsecureRfcommWithServiceRecord("NfcHandover", mServiceUuid);
+				} catch (NoSuchMethodError e) {
+					tmp = mBtAdapter.listenUsingRfcommWithServiceRecord("NfcHandover", mServiceUuid);
+				}
 			} catch (IOException e) {
 				System.err.println("Could not open server socket");
 				e.printStackTrace(System.err);
@@ -201,7 +205,6 @@ public class NfcBluetoothBridge implements NfcBridge {
 				synchronized(HandoverConnectedThread.this) {
 					mmIsReadDone = true;
 					if (mmIsWriteDone) {
-						Log.d(TAG, "STOPPING FROM READ THREAD");
 						cancel();
 					}
 				}

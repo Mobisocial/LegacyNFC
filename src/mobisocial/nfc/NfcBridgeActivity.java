@@ -1,6 +1,8 @@
 package mobisocial.nfc;
 
 
+import mobisocial.nfc.util.NdefHelper;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -8,17 +10,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class NfcBridgeActivity extends Activity {
 	protected static final String TAG = "nfcserver";
 	protected static final String ACTION_UPDATE = "mobisocial.intent.UPDATE";
 	private TextView mStatusView = null;
 	private Button mToggleButton = null;
+	private Button mConfigButton = null;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,15 +35,13 @@ public class NfcBridgeActivity extends Activity {
         mIntentFilter.addAction(ACTION_UPDATE);
         
         mToggleButton = (Button)findViewById(R.id.toggle);
+        mConfigButton = (Button)findViewById(R.id.config);
         mStatusView = (TextView)findViewById(R.id.status);
-        
-        mToggleButton.setOnClickListener(mToggleBridge);
     }
     
     @Override
     protected void onResume() {
     	super.onResume();
-    	
 	    doBindService();
 	    registerReceiver(mUpdateReceiver, mIntentFilter);
     }
@@ -52,7 +56,6 @@ public class NfcBridgeActivity extends Activity {
     
     private View.OnClickListener mToggleBridge = new View.OnClickListener() {
     	public void onClick(View v) {
-    		if (!mUiBuilt) return;
     		if (mBoundService.isBridgeRunning()) {
     			mBoundService.disableBridge();
     		} else {
@@ -60,9 +63,27 @@ public class NfcBridgeActivity extends Activity {
     		}
     	}
     };
+
+    private View.OnClickListener mConfigListener= new View.OnClickListener() {
+    	public void onClick(View v) {
+    		if (!mBoundService.isBridgeRunning()) {
+        		Toast.makeText(NfcBridgeActivity.this, "Service must be running.", Toast.LENGTH_SHORT).show();
+        	} else {
+        		String handover = mBoundService.getBridgeReference();
+        		String content = "ndefb://" + Base64.encodeToString(
+        				NdefHelper.getHandoverNdef(handover).toByteArray(), Base64.URL_SAFE);
+        		String qr = "http://chart.apis.google.com/chart?cht=qr&chs=350x350&chl=" + content;
+        		Intent view = new Intent(Intent.ACTION_VIEW);
+        		view.setData(Uri.parse(qr));
+        	}
+    	}
+    };
     
     boolean mUiBuilt = false;
     private void buildUi() {
+    	mToggleButton.setOnClickListener(mToggleBridge);
+        mConfigButton.setOnClickListener(mConfigListener);
+
     	if (!mBoundService.isBridgeRunning()) {
     		mStatusView.setText(R.string.bridge_not_running);
     		mToggleButton.setText(R.string.enable_bridge);

@@ -62,7 +62,7 @@ public class NfcBridgeService extends Service implements NdefProxy {
 		
 		mSetNdefFilter = new IntentFilter();
 		mSetNdefFilter.addAction(ACTION_SET_NDEF);
-		registerReceiver(mSetNdefReceiver, mSetNdefFilter);
+		registerReceiver(mNdefSharedReceiver, mSetNdefFilter);
 		
 		SharedPreferences preferences = getSharedPreferences("main", 0);
 		String uuid = preferences.getString("serviceUuid", null);
@@ -152,13 +152,28 @@ public class NfcBridgeService extends Service implements NdefProxy {
 	};
 	
 	IntentFilter mSetNdefFilter;
-	BroadcastReceiver mSetNdefReceiver = new BroadcastReceiver() {
+	BroadcastReceiver mNdefSharedReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.hasExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)) {
 				Parcelable[] messages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 				mForegroundMessage = (NdefMessage)messages[0];
+				
+				Notification notification = new Notification(R.drawable.stat_sys_nfc, null, System.currentTimeMillis());
+	    		Intent sendIntent = new Intent(Intent.ACTION_SEND); // ACTION_SHARE
+	    		// sendIntent.setComponentName("mobisocial.vnfc", "mobisocial.vnfc.ShareActivity");
+	    		intent.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, messages);
+	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, sendIntent, 0);
+	    		// TODO: message from intent.
+	    		// TODO: support instructions for handling.
+	    		// TODO: track remote nfc devices. Just use broadcast for now ;)
+	    		// TODO: build gui for selection.
+	    		if (otherDeviceMightBeInterested()) {
+		    		notification.setLatestEventInfo(NfcBridgeService.this, "Share this whiteboard.", "Click to send to another device.", contentIntent);
+		    		mNotificationManager.notify(0, notification);
+	    		}
 			} else {
+				mNotificationManager.cancel(0);
 				mForegroundMessage = null;
 			}
 		}
@@ -182,7 +197,7 @@ public class NfcBridgeService extends Service implements NdefProxy {
 			NdefMessage ndef = (NdefMessage)messages[0];
 			NdefRecord firstRecord = ndef.getRecords()[0];
 	    	Notification notification = null;
-	    	
+	    	// TODO: Use NdefHandler paradigm and code from DesktopNfc
 			if (UriRecord.isUri(firstRecord)) {
 	    		UriRecord uriRecord = UriRecord.parse(firstRecord);
 	    		Intent intent = uriRecord.getIntentForUri();
