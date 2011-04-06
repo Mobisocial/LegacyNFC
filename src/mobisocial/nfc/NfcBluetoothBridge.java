@@ -60,11 +60,7 @@ public class NfcBluetoothBridge implements NfcBridge {
 
 			// Create a new listening server socket
 			try {
-				try {
-					tmp = mBtAdapter.listenUsingInsecureRfcommWithServiceRecord("NfcHandover", mServiceUuid);
-				} catch (NoSuchMethodError e) {
-					tmp = mBtAdapter.listenUsingRfcommWithServiceRecord("NfcHandover", mServiceUuid);
-				}
+				tmp = InsecureBluetooth.listenUsingRfcommWithServiceRecord(mBtAdapter, "NfcHandover", mServiceUuid, false);
 			} catch (IOException e) {
 				System.err.println("Could not open server socket");
 				e.printStackTrace(System.err);
