@@ -1,7 +1,10 @@
 package mobisocial.nfc;
 
 
+import org.apache.commons.codec.binary.Base64;
+
 import mobisocial.nfc.util.NdefHelper;
+import mobisocial.nfc.util.QR;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -13,7 +16,6 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -70,11 +72,11 @@ public class NfcBridgeActivity extends Activity {
         		Toast.makeText(NfcBridgeActivity.this, "Service must be running.", Toast.LENGTH_SHORT).show();
         	} else {
         		String handover = mBoundService.getBridgeReference();
-        		String content = "ndefb://" + Base64.encodeToString(
-        				NdefHelper.getHandoverNdef(handover).toByteArray(), Base64.URL_SAFE);
-        		String qr = "http://chart.apis.google.com/chart?cht=qr&chs=350x350&chl=" + content;
-        		Intent view = new Intent(Intent.ACTION_VIEW);
-        		view.setData(Uri.parse(qr));
+        		String content = "ndefb://" + new String(Base64.encodeBase64(
+        				NdefHelper.getHandoverNdef(handover).toByteArray()));
+        		String qr = QR.getQrl(content);
+        		Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(qr));
+        		startActivity(view);
         	}
     	}
     };

@@ -163,16 +163,15 @@ public class NfcBridgeService extends Service implements NdefProxy {
 				Notification notification = new Notification(R.drawable.stat_sys_nfc, null, System.currentTimeMillis());
 	    		Intent sendIntent = new Intent(Intent.ACTION_SEND); // ACTION_SHARE
 	    		// sendIntent.setComponentName("mobisocial.vnfc", "mobisocial.vnfc.ShareActivity");
-	    		intent.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, messages);
+	    		intent.putExtra(EXTRA_NDEF_MESSAGES, messages);
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, sendIntent, 0);
 	    		// TODO: message from intent.
 	    		// TODO: support instructions for handling.
 	    		// TODO: track remote nfc devices. Just use broadcast for now ;)
 	    		// TODO: build gui for selection.
-	    		if (otherDeviceMightBeInterested()) {
-		    		notification.setLatestEventInfo(NfcBridgeService.this, "Share this whiteboard.", "Click to send to another device.", contentIntent);
-		    		mNotificationManager.notify(0, notification);
-	    		}
+
+	    		notification.setLatestEventInfo(NfcBridgeService.this, "Share current activity.", "Click to send to another device.", contentIntent);
+	    		mNotificationManager.notify(0, notification);
 			} else {
 				mNotificationManager.cancel(0);
 				mForegroundMessage = null;

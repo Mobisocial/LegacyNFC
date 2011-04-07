@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.UUID;
 
+import mobisocial.bluetooth.InsecureBluetooth;
 import mobisocial.nfc.NfcBridgeService.DuplexSocket;
 
 import android.bluetooth.BluetoothAdapter;
