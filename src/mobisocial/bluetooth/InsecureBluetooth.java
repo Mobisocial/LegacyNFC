@@ -12,6 +12,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Binder;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelUuid;
@@ -22,7 +24,7 @@ public class InsecureBluetooth {
 	static private class InUse extends RuntimeException {
 	}
 	public static BluetoothServerSocket listenUsingRfcommWithServiceRecord(BluetoothAdapter adapter, String name, UUID uuid, boolean encrypt) throws IOException {
-    	try {
+		try {
 			Class c_rfcomm_channel_picker = null;
 			Class[] children = BluetoothAdapter.class.getDeclaredClasses();
 			for(Class c : children) {

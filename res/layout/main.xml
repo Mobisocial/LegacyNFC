@@ -25,6 +25,14 @@
 />
 
 </LinearLayout>
+
+<Button
+	android:id="@+id/pair"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Pair With Device"
+/>
+
 <TextView
 	android:id="@+id/status"
 	android:layout_width="fill_parent"
