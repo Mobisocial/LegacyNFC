@@ -4,6 +4,7 @@ package mobisocial.nfc.legacy;
 import org.apache.commons.codec.binary.Base64;
 
 import mobisocial.nfc.R;
+import mobisocial.nfc.ndefexchange.ConnectionHandoverManager;
 import mobisocial.nfc.util.NdefHelper;
 import mobisocial.nfc.util.QR;
 
@@ -77,7 +78,7 @@ public class NfcBridgeActivity extends Activity {
         		Toast.makeText(NfcBridgeActivity.this, "Service must be running.", Toast.LENGTH_SHORT).show();
         	} else {
         		String handover = mBoundService.getBridgeReference();
-        		String content = "ndefb://" + new String(Base64.encodeBase64(
+                String content = ConnectionHandoverManager.USER_HANDOVER_PREFIX + new String(Base64.encodeBase64(
         				NdefHelper.getHandoverNdef(handover).toByteArray()));
         		String qr = QR.getQrl(content);
         		Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(qr));
@@ -165,11 +166,12 @@ public class NfcBridgeActivity extends Activity {
 	            	throw new Exception();
 	            }
                 String data = intent.getStringExtra("SCAN_RESULT");
-                if (!data.startsWith("ndefb://")) {
+                if (!data.startsWith(ConnectionHandoverManager.USER_HANDOVER_PREFIX)) {
                 	throw new Exception();
                 }
                 NdefMessage ndef = new NdefMessage(android.util.Base64.decode(
-                		data.substring(8), android.util.Base64.URL_SAFE));
+                		data.substring(ConnectionHandoverManager.USER_HANDOVER_PREFIX.length()),
+                		android.util.Base64.URL_SAFE));
                 mBoundService.setNdefExchangeTarget(ndef);
                 toast("Set Ndef exchange pairing.");
         	} catch (Exception e) {

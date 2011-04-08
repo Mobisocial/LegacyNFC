@@ -15,6 +15,7 @@ import mobisocial.nfc.NfcInterface;
 import mobisocial.nfc.PrioritizedHandler;
 
 public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandler {
+	public static final String USER_HANDOVER_PREFIX = "tato://hr/";
 	public static final String TAG = "connectionhandover";
 	public static final int HANDOVER_PRIORITY = 5;
 	private final Set<ConnectionHandover> mmConnectionHandovers = new LinkedHashSet<ConnectionHandover>();
@@ -88,8 +89,22 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 	 */
 	public static boolean isHandoverRequest(NdefMessage ndef) {
 		NdefRecord[] records = (ndef).getRecords();
-		return (records.length >= 3 
+
+		// NFC Forum specification:
+		if (records.length >= 3
 			&& records[0].getTnf() == NdefRecord.TNF_WELL_KNOWN
-			&& Arrays.equals(records[0].getType(), NdefRecord.RTD_HANDOVER_REQUEST));
+			&& Arrays.equals(records[0].getType(), NdefRecord.RTD_HANDOVER_REQUEST)) {
+			return true;
+		}
+
+		// User-space handover:
+		// TODO: Support uri profile
+		if (records.length > 0
+				&& records[0].getTnf() == NdefRecord.TNF_ABSOLUTE_URI
+				&& records[0].getPayload().length >= USER_HANDOVER_PREFIX.length()) {
+			String scheme = new String(records[0].getPayload(), 0, USER_HANDOVER_PREFIX.length());
+			return USER_HANDOVER_PREFIX.equals(scheme);
+		}
+		return false;
 	}
 }
