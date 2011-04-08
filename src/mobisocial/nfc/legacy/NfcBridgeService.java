@@ -77,6 +77,7 @@ public class NfcBridgeService extends Service implements NfcInterface {
 	
 	@Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+		startForeground(0, null);
         return START_STICKY;
     }
 	
@@ -116,6 +117,7 @@ public class NfcBridgeService extends Service implements NfcInterface {
 		mNfcBridge.stop();
 		mNfcBridge = null;
 		sendBroadcast(mNotifyIntent);
+		stopForeground(false);
 		stopSelf();
 	}
 	
@@ -308,8 +310,8 @@ public class NfcBridgeService extends Service implements NfcInterface {
 		mNdefExchangeReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				pendingExchange.exchangeNdef(mForegroundMessage);
 				Toast.makeText(NfcBridgeService.this, "Sending to device.", Toast.LENGTH_SHORT).show();
+				pendingExchange.exchangeNdef(mForegroundMessage);
 			}
 		};
 
