@@ -176,6 +176,7 @@ public class NfcBridgeService extends Service implements NfcInterface {
 	    		Intent sendIntent = new Intent(Intent.ACTION_SEND);
 	    		sendIntent.putExtra("ndef", mForegroundMessage);
 	    		sendIntent.setPackage(getPackageName());
+	    		sendIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 	    		// sendIntent.setComponentName("mobisocial.vnfc", "mobisocial.indef.ShareActivity");
 	    		//intent.putExtra(EXTRA_NDEF_MESSAGES, messages);
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, sendIntent, PendingIntent.FLAG_CANCEL_CURRENT);

@@ -31,6 +31,7 @@ public class SendActivity extends Activity {
 
 		findViewById(R.id.quicktap).setOnClickListener(doQuicktap);
 		findViewById(R.id.scanqr).setOnClickListener(doScanQR);
+		findViewById(R.id.junction).setVisibility(View.GONE);
 		findViewById(R.id.junction).setOnClickListener(doJunction);
 	}
 	
@@ -38,7 +39,7 @@ public class SendActivity extends Activity {
 		@Override
 		public void onClick(View arg0) {
 			if (mPartner != null) {
-				toast("Sending ndef.");
+				toast("Exchanging messages.");
 				mPartner.exchangeNdef(mNdef);
 				finish();
 			} else {
@@ -68,7 +69,7 @@ public class SendActivity extends Activity {
 	private void tryToSend() {
 		if (mNdef != null) {
 			if (mPartner != null) {
-				toast("Exchanging ndef " + new String(mNdef.getRecords()[0].getPayload()));
+				toast("Exchanging messages.");
 				mPartner.exchangeNdef(mNdef);
 				finish();
 			}
@@ -92,7 +93,7 @@ public class SendActivity extends Activity {
                 mPartner = new PendingNdefExchange(ndef, NfcBridgeService.getInstance());
                 tryToSend();
         	} catch (Exception e) {
-        		toast("Could not set nfc partner.");
+        		toast("No valid vNFC device found.");
         	}
         }
 	}

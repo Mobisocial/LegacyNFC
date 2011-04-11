@@ -13,7 +13,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".legacy.SendActivity">
+        <activity android:name=".legacy.SendActivity" android:taskAffinity="">
         	<intent-filter>
         		<action android:name="android.intent.action.SEND" />
         		<category android:name="android.intent.category.DEFAULT" />
