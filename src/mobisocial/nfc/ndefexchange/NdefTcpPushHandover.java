@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 
+import mobisocial.nfc.NdefHandler;
 import mobisocial.nfc.NfcInterface;
 
 import android.nfc.NdefMessage;
@@ -37,17 +38,16 @@ public class NdefTcpPushHandover implements ConnectionHandover {
 	}
 
 	@Override
-	public void doConnectionHandover(NdefMessage handoverMessage, int record, NfcInterface nfcInterface) throws IOException {
+	public void doConnectionHandover(NdefMessage handoverMessage, int record, NdefMessage outboundNdef, NdefHandler inboundHandler) throws IOException {
 		NdefRecord handoverRequest = handoverMessage.getRecords()[record];
-		NdefMessage outboundNdef = nfcInterface.getForegroundNdefMessage();
 		if (outboundNdef == null) return;
 		
 		String uriString = new String(handoverRequest.getPayload());
 		URI uri = URI.create(uriString);
-		sendNdefOverTcp(uri, nfcInterface);
+		sendNdefOverTcp(uri, outboundNdef, inboundHandler);
 	}
 
-	private void sendNdefOverTcp(URI target, NfcInterface ndefProxy) throws IOException {
+	private void sendNdefOverTcp(URI target, NdefMessage outbound, NdefHandler inboundHandler) throws IOException {
 		String host = target.getHost();
 		int port = target.getPort();
 		if (port == -1) {
@@ -55,6 +55,6 @@ public class NdefTcpPushHandover implements ConnectionHandover {
 		}
 
 		DuplexSocket socket = new TcpDuplexSocket(host, port);
-		new NdefExchangeThread(socket, ndefProxy).start();
+		new NdefExchangeThread(socket, outbound, inboundHandler).start();
 	}
 }

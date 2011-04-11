@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<LinearLayout
-	android:orientation="horizontal"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	>
 
 <Button
 	android:id="@+id/toggle"
@@ -17,25 +12,41 @@
 	android:text="Enable Nfc"
 />
 
-<Button
-	android:id="@+id/config"
-	android:layout_width="wrap_content"
+<TextView
+	android:id="@+id/status"
+	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:text="Configuration Code"
+	android:layout_below="@id/toggle"
 />
 
-</LinearLayout>
 
+<LinearLayout
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_alignParentBottom="true"
+	android:id="@+id/pair_layout"
+	>
 <Button
 	android:id="@+id/pair"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Pair With Device"
+	android:text="Set Quick-Tap Device"
 />
 
-<TextView
-	android:id="@+id/status"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-	/>
+<Button
+	android:id="@+id/config"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Show Configuration"
+/>
 </LinearLayout>
+
+<TextView
+	android:id="@+id/paired"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_above="@id/pair_layout"
+/>
+
+</RelativeLayout>

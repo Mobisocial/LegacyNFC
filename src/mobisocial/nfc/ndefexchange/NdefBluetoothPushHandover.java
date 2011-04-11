@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
 
+import mobisocial.nfc.NdefHandler;
 import mobisocial.nfc.NfcInterface;
 
 import android.bluetooth.BluetoothAdapter;
@@ -43,7 +44,7 @@ public class NdefBluetoothPushHandover implements ConnectionHandover {
 	}
 
 	@Override
-	public void doConnectionHandover(NdefMessage handoverMessage, int record, NfcInterface nfcInterface) throws IOException {
+	public void doConnectionHandover(NdefMessage handoverMessage, int record, NdefMessage outbound, NdefHandler inboundHandler) throws IOException {
 		NdefRecord handoverRequest = handoverMessage.getRecords()[record];
 		String uriString = new String(handoverRequest.getPayload());
 		Uri target = Uri.parse(uriString);
@@ -51,6 +52,6 @@ public class NdefBluetoothPushHandover implements ConnectionHandover {
 		String mac = target.getAuthority();
 		UUID uuid = UUID.fromString(target.getPath().substring(1));
 		DuplexSocket socket = new BluetoothDuplexSocket(mmBluetoothAdapter, mac, uuid);
-		new NdefExchangeThread(socket, nfcInterface).start();
+		new NdefExchangeThread(socket, outbound, inboundHandler).start();
 	}
 }

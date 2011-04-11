@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import android.nfc.NdefMessage;
 import android.util.Log;
 
+import mobisocial.nfc.NdefHandler;
 import mobisocial.nfc.NfcInterface;
 
 /**
@@ -21,13 +22,16 @@ public class NdefExchangeThread extends Thread {
 	private final DuplexSocket mmSocket;
 	private final InputStream mmInStream;
 	private final OutputStream mmOutStream;
-	private final NfcInterface mmNfcInterface;
+	private final NdefMessage mmOutboundNdef;
+	private final NdefHandler mmNdefHandler;
 	
 	private boolean mmIsWriteDone = false;
 	private boolean mmIsReadDone = false;
 	
-	public NdefExchangeThread(DuplexSocket socket, NfcInterface nfcInterface) {
-		mmNfcInterface = nfcInterface;
+	public NdefExchangeThread(DuplexSocket socket, NdefMessage outbound, NdefHandler ndefHandler) {
+		mmOutboundNdef = outbound;
+		mmNdefHandler = ndefHandler;
+
 		mmSocket = socket;
 		InputStream tmpIn = null;
 		OutputStream tmpOut = null;
@@ -66,7 +70,7 @@ public class NdefExchangeThread extends Thread {
 					read += dataIn.read(ndefBytes, read, (length - read));
 				}
 				NdefMessage ndef = new NdefMessage(ndefBytes);
-				mmNfcInterface.handleNdef(new NdefMessage[] {ndef});
+				mmNdefHandler.handleNdef(new NdefMessage[] {ndef});
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "Failed to issue handover.", e);
@@ -91,11 +95,11 @@ public class NdefExchangeThread extends Thread {
 		@Override
 		public void run() {
 			try {
-				NdefMessage outbound = mmNfcInterface.getForegroundNdefMessage();
+				Log.d(TAG, "Exchanging ndef " + mmOutboundNdef);
 				DataOutputStream dataOut = new DataOutputStream(mmOutStream);
 				dataOut.writeByte(HANDOVER_VERSION);
-				if (outbound != null) {
-					byte[] ndefBytes = outbound.toByteArray();
+				if (mmOutboundNdef != null) {
+					byte[] ndefBytes = mmOutboundNdef.toByteArray();
 					dataOut.writeInt(ndefBytes.length);
 					dataOut.write(ndefBytes);
 				} else {

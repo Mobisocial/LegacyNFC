@@ -5,6 +5,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import mobisocial.nfc.R;
 import mobisocial.nfc.ndefexchange.ConnectionHandoverManager;
+import mobisocial.nfc.ndefexchange.PendingNdefExchange;
 import mobisocial.nfc.util.NdefHelper;
 import mobisocial.nfc.util.QR;
 
@@ -32,6 +33,8 @@ public class NfcBridgeActivity extends Activity {
 	private Button mToggleButton = null;
 	private Button mConfigButton = null;
 	private Button mPairButton = null;
+	private TextView mPairStatusView = null;
+	private static PendingNdefExchange mNdefExchange;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -45,6 +48,10 @@ public class NfcBridgeActivity extends Activity {
         mConfigButton = (Button)findViewById(R.id.config);
         mPairButton = (Button)findViewById(R.id.pair);
         mStatusView = (TextView)findViewById(R.id.status);
+        mPairStatusView = (TextView)findViewById(R.id.paired);
+        
+        mPairButton.setEnabled(false);
+        mConfigButton.setEnabled(false);
     }
     
     @Override
@@ -59,7 +66,6 @@ public class NfcBridgeActivity extends Activity {
     	super.onPause();
     	unregisterReceiver(mUpdateReceiver);
     	doUnbindService();
-    	mUiBuilt = false;
     }
     
     private View.OnClickListener mToggleBridge = new View.OnClickListener() {
@@ -99,7 +105,6 @@ public class NfcBridgeActivity extends Activity {
     	}
     };
     
-    boolean mUiBuilt = false;
     private void buildUi() {
     	mToggleButton.setOnClickListener(mToggleBridge);
         mConfigButton.setOnClickListener(mConfigListener);
@@ -110,9 +115,15 @@ public class NfcBridgeActivity extends Activity {
     		mToggleButton.setText(R.string.enable_bridge);
     	} else {
     		mStatusView.setText("Bridge running on " + mBoundService.getBridgeReference());
+    		mPairButton.setEnabled(true);
+            mConfigButton.setEnabled(true);
+    		/*if (mBoundService.isPaired()) {
+    			mPairStatusView.setText("Quick-tap enabled.");
+    		} else {
+    			mPairStatusView.setText("No quick-tap device set.");
+    		}*/
     		mToggleButton.setText(R.string.disable_bridge);
     	}
-    	mUiBuilt = true;
     }
 
     
@@ -172,12 +183,15 @@ public class NfcBridgeActivity extends Activity {
                 NdefMessage ndef = new NdefMessage(android.util.Base64.decode(
                 		data.substring(ConnectionHandoverManager.USER_HANDOVER_PREFIX.length()),
                 		android.util.Base64.URL_SAFE));
-                mBoundService.setNdefExchangeTarget(ndef);
-                toast("Set Ndef exchange pairing.");
+               mNdefExchange = new PendingNdefExchange(ndef, null);
         	} catch (Exception e) {
         		toast("Could not set nfc partner.");
         	}
         }
+    }
+    
+    public static PendingNdefExchange getNdefExchange() {
+    	return mNdefExchange;
     }
 
     public void toast(String text) {

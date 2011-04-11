@@ -15,14 +15,23 @@ import mobisocial.nfc.NfcInterface;
 import mobisocial.nfc.PrioritizedHandler;
 
 public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandler {
-	public static final String USER_HANDOVER_PREFIX = "tato://hr/";
+	public static final String USER_HANDOVER_PREFIX = "ndef://wkt:hr/";
 	public static final String TAG = "connectionhandover";
 	public static final int HANDOVER_PRIORITY = 5;
 	private final Set<ConnectionHandover> mmConnectionHandovers = new LinkedHashSet<ConnectionHandover>();
 	private final NfcInterface mNfc;
-
+	private final NdefHandler mNdefHandler; // TODO hack
+	
 	public ConnectionHandoverManager(NfcInterface nfc) {
 		mNfc = nfc;
+		mNdefHandler = new NdefHandler() {
+			@Override
+			public int handleNdef(NdefMessage[] ndefMessages) {
+				mNfc.handleNdef(ndefMessages);
+				return NDEF_CONSUME;
+			}
+		};
+
 		mmConnectionHandovers.add(new NdefBluetoothPushHandover());
 		mmConnectionHandovers.add(new NdefTcpPushHandover());
 	}
@@ -57,7 +66,7 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 		if (!isHandoverRequest(handoverRequest)) {
 			return NDEF_PROPAGATE;
 		}
-
+		Log.d(TAG, "chm sending " + outboundNdef);
 		NdefRecord[] records = handoverRequest.getRecords();
 		for (int i = 2; i < records.length; i++) {
 			Iterator<ConnectionHandover> handovers = mmConnectionHandovers.iterator();
@@ -65,7 +74,7 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 				ConnectionHandover handover = handovers.next();
 				if (handover.supportsRequest(records[i])) {
 					try {
-						handover.doConnectionHandover(handoverRequest, i, mNfc);
+						handover.doConnectionHandover(handoverRequest, i, outboundNdef, mNdefHandler);
 						return NDEF_CONSUME;
 					} catch (IOException e) {
 						Log.w(TAG, "Handover failed.", e);

@@ -2,6 +2,7 @@ package mobisocial.nfc.ndefexchange;
 
 import java.io.IOException;
 
+import mobisocial.nfc.NdefHandler;
 import mobisocial.nfc.NfcInterface;
 
 import android.nfc.NdefMessage;
@@ -19,6 +20,6 @@ public interface ConnectionHandover {
 	 * @param nfcInterface The Nfc interface for sending and receiving ndef messages.
 	 * @throws IOException
 	 */
-	public void doConnectionHandover(NdefMessage handoverRequest, int recordNumber, NfcInterface nfcInterface) throws IOException;
+	public void doConnectionHandover(NdefMessage handoverRequest, int recordNumber, NdefMessage outbound, NdefHandler inboundHandler) throws IOException;
 	public boolean supportsRequest(NdefRecord record);
 }

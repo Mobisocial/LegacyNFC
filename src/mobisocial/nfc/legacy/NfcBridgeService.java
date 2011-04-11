@@ -50,9 +50,14 @@ public class NfcBridgeService extends Service implements NfcInterface {
 	private UUID mServiceUuid;
 	private NdefMessage mForegroundMessage;
 	
+	private static NfcBridgeService sInstance;
+	// TODO: this is a hack.
+	public static NfcBridgeService getInstance() { return sInstance; }
+	
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		sInstance = this;
 		mNotificationManager = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
 		mNotifyIntent = new Intent(NfcBridgeActivity.ACTION_UPDATE);
 		mNotifyIntent.setPackage(getPackageName());
@@ -165,19 +170,22 @@ public class NfcBridgeService extends Service implements NfcInterface {
 				Log.d(TAG, "set NDEF with tnf " + mForegroundMessage.getRecords()[0].getTnf());
 				
 				Notification notification = new Notification(R.drawable.stat_sys_nfc, null, System.currentTimeMillis());
-	    		Intent sendIntent = new Intent(Intent.ACTION_SEND); // ACTION_SHARE
+				
+				Log.d(TAG, "TODO: use data field with ndef://wkt:hr/[base64]");
+				//Uri ndef = new Uri.Builder().scheme("ndef").authority("wkt:ndef").appendEncodedPath(arg0)
+	    		Intent sendIntent = new Intent(Intent.ACTION_SEND);
+	    		sendIntent.putExtra("ndef", mForegroundMessage);
 	    		sendIntent.setPackage(getPackageName());
 	    		// sendIntent.setComponentName("mobisocial.vnfc", "mobisocial.indef.ShareActivity");
 	    		//intent.putExtra(EXTRA_NDEF_MESSAGES, messages);
-	    		PendingIntent contentIntent = PendingIntent.getBroadcast(NfcBridgeService.this, 0, sendIntent, 0);
-	    		// TODO: message from intent.
-	    		// TODO: support instructions for handling.
-	    		// TODO: build gui for selection.
+	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, sendIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+	    		// try local broadcast
+	    		// else try local activity
+	    		// else try global broadcast
+	    		// else try global activity
 	    		// TODO: Show notification even if nfc service isn't running?
-	    		if (mNdefExchangeReceiver != null) {
-		    		notification.setLatestEventInfo(NfcBridgeService.this, "Share current activity.", "Click to send to another device.", contentIntent);
-		    		mNotificationManager.notify(0, notification);
-	    		}
+	    		notification.setLatestEventInfo(NfcBridgeService.this, "Share current activity.", "Click to send to another device.", contentIntent);
+	    		mNotificationManager.notify(0, notification);
 			} else {
 				mNotificationManager.cancel(0);
 				mForegroundMessage = null;
@@ -298,25 +306,6 @@ public class NfcBridgeService extends Service implements NfcInterface {
 	@Override
 	public void setForegroundNdefMessage(NdefMessage ndef) {
 		mForegroundMessage = ndef;
-	}
-
-	private BroadcastReceiver mNdefExchangeReceiver;
-	public void setNdefExchangeTarget(NdefMessage handoverRequest) {
-		if (mNdefExchangeReceiver != null) {
-			unregisterReceiver(mNdefExchangeReceiver);
-		}
-
-		final PendingNdefExchange pendingExchange = new PendingNdefExchange(handoverRequest, this);
-		mNdefExchangeReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				Toast.makeText(NfcBridgeService.this, "Sending to device.", Toast.LENGTH_SHORT).show();
-				pendingExchange.exchangeNdef(mForegroundMessage);
-			}
-		};
-
-		IntentFilter filter = new IntentFilter(Intent.ACTION_SEND);
-		registerReceiver(mNdefExchangeReceiver, filter);
 	}
 
 	@Override
