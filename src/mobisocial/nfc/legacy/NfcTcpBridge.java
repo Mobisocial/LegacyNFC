@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-import mobisocial.nfc.NfcInterface;
+import mobisocial.ndefexchange.NdefExchangeContract;
 
 import android.nfc.NdefMessage;
 import android.util.Log;
@@ -19,9 +19,9 @@ public class NfcTcpBridge implements NfcBridge {
 	private static final String TAG = "nfcserver";
 	private static final int SERVER_PORT = 7924;
 	private AcceptThread mAcceptThread;
-	private final NfcInterface mNdefReceiver;
+	private final NdefExchangeContract mNdefReceiver;
 
-	public NfcTcpBridge(NfcInterface ndefReceiver) {
+	public NfcTcpBridge(NdefExchangeContract ndefReceiver) {
 		mNdefReceiver = ndefReceiver;
 	}
 

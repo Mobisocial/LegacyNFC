@@ -1,4 +1,21 @@
-package mobisocial.nfc.ndefexchange;
+/*
+ * Copyright (C) 2011 Stanford University MobiSocial Lab
+ * http://mobisocial.stanford.edu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package mobisocial.ndefexchange;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,9 +25,6 @@ import java.io.OutputStream;
 
 import android.nfc.NdefMessage;
 import android.util.Log;
-
-import mobisocial.nfc.NdefHandler;
-import mobisocial.nfc.NfcInterface;
 
 /**
  * Runs a thread during a connection handover with a remote device over a
@@ -22,16 +36,13 @@ public class NdefExchangeThread extends Thread {
 	private final DuplexSocket mmSocket;
 	private final InputStream mmInStream;
 	private final OutputStream mmOutStream;
-	private final NdefMessage mmOutboundNdef;
-	private final NdefHandler mmNdefHandler;
+	private final NdefExchangeContract mmNfcInterface;
 	
 	private boolean mmIsWriteDone = false;
 	private boolean mmIsReadDone = false;
 	
-	public NdefExchangeThread(DuplexSocket socket, NdefMessage outbound, NdefHandler ndefHandler) {
-		mmOutboundNdef = outbound;
-		mmNdefHandler = ndefHandler;
-
+	public NdefExchangeThread(DuplexSocket socket, NdefExchangeContract nfcInterface) {
+		mmNfcInterface = nfcInterface;
 		mmSocket = socket;
 		InputStream tmpIn = null;
 		OutputStream tmpOut = null;
@@ -70,7 +81,7 @@ public class NdefExchangeThread extends Thread {
 					read += dataIn.read(ndefBytes, read, (length - read));
 				}
 				NdefMessage ndef = new NdefMessage(ndefBytes);
-				mmNdefHandler.handleNdef(new NdefMessage[] {ndef});
+				mmNfcInterface.handleNdef(new NdefMessage[] {ndef});
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "Failed to issue handover.", e);
@@ -95,11 +106,11 @@ public class NdefExchangeThread extends Thread {
 		@Override
 		public void run() {
 			try {
-				Log.d(TAG, "Exchanging ndef " + mmOutboundNdef);
+				NdefMessage outbound = mmNfcInterface.getForegroundNdefMessage();
 				DataOutputStream dataOut = new DataOutputStream(mmOutStream);
 				dataOut.writeByte(HANDOVER_VERSION);
-				if (mmOutboundNdef != null) {
-					byte[] ndefBytes = mmOutboundNdef.toByteArray();
+				if (outbound != null) {
+					byte[] ndefBytes = outbound.toByteArray();
 					dataOut.writeInt(ndefBytes.length);
 					dataOut.write(ndefBytes);
 				} else {

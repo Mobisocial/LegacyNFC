@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import mobisocial.nfc.NfcInterface;
+import mobisocial.ndefexchange.NdefExchangeContract;
+import mobisocial.ndefexchange.PendingNdefExchange;
 import mobisocial.nfc.R;
-import mobisocial.nfc.ndefexchange.PendingNdefExchange;
 
 import com.android.apps.tag.record.UriRecord;
 
@@ -34,7 +34,7 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.widget.Toast;
 
-public class NfcBridgeService extends Service implements NfcInterface {
+public class NfcBridgeService extends Service implements NdefExchangeContract {
 	private static final String EXTRA_NDEF_MESSAGES =  "android.nfc.extra.NDEF_MESSAGES";
 	
 	private static final String TAG = NfcBridgeActivity.TAG;
@@ -194,10 +194,11 @@ public class NfcBridgeService extends Service implements NfcInterface {
 		}
 	};
 
-	public void handleNdef(NdefMessage[] ndef) {
+	public int handleNdef(NdefMessage[] ndef) {
     	Intent handleNdefIntent = new Intent(ACTION_HANDLE_NDEF);
     	handleNdefIntent.putExtra(EXTRA_NDEF_MESSAGES, ndef);
     	sendOrderedBroadcast(handleNdefIntent, "android.permission.NFC", mNdefRouter, null, Activity.RESULT_OK, null, null);
+    	return NDEF_CONSUME;
 	}
 	
 	/**
@@ -304,12 +305,10 @@ public class NfcBridgeService extends Service implements NfcInterface {
 		return mForegroundMessage;
 	}
 
-	@Override
 	public void setForegroundNdefMessage(NdefMessage ndef) {
 		mForegroundMessage = ndef;
 	}
 
-	@Override
 	public void share(Object shared) {
 		throw new UnsupportedOperationException("Sharing not available.");
 	}

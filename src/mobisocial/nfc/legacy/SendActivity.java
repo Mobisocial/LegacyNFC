@@ -1,8 +1,8 @@
 package mobisocial.nfc.legacy;
 
+import mobisocial.ndefexchange.PendingNdefExchange;
+import mobisocial.nfc.ConnectionHandoverManager;
 import mobisocial.nfc.R;
-import mobisocial.nfc.ndefexchange.ConnectionHandoverManager;
-import mobisocial.nfc.ndefexchange.PendingNdefExchange;
 import android.app.Activity;
 import android.content.Intent;
 import android.nfc.NdefMessage;

@@ -3,9 +3,9 @@ package mobisocial.nfc.legacy;
 
 import org.apache.commons.codec.binary.Base64;
 
+import mobisocial.ndefexchange.PendingNdefExchange;
+import mobisocial.nfc.ConnectionHandoverManager;
 import mobisocial.nfc.R;
-import mobisocial.nfc.ndefexchange.ConnectionHandoverManager;
-import mobisocial.nfc.ndefexchange.PendingNdefExchange;
 import mobisocial.nfc.util.NdefHelper;
 import mobisocial.nfc.util.QR;
 

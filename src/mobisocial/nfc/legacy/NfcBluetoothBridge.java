@@ -9,8 +9,8 @@ import java.net.SocketException;
 import java.util.UUID;
 
 import mobisocial.bluetooth.InsecureBluetooth;
-import mobisocial.nfc.NfcInterface;
-import mobisocial.nfc.ndefexchange.DuplexSocket;
+import mobisocial.ndefexchange.DuplexSocket;
+import mobisocial.ndefexchange.NdefExchangeContract;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
@@ -24,10 +24,10 @@ public class NfcBluetoothBridge implements NfcBridge {
 	private static final String TAG = "nfcserver";
 	private final UUID mServiceUuid;
 	private AcceptThread mAcceptThread;
-	private final NfcInterface mNdefProxy;
+	private final NdefExchangeContract mNdefProxy;
 	private final BluetoothAdapter mBtAdapter;
 
-	public NfcBluetoothBridge(NfcInterface ndefProxy, UUID serviceUuid) {
+	public NfcBluetoothBridge(NdefExchangeContract ndefProxy, UUID serviceUuid) {
 		mNdefProxy = ndefProxy;
 		mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 		mServiceUuid = serviceUuid;
@@ -157,12 +157,12 @@ public class NfcBluetoothBridge implements NfcBridge {
 		private final DuplexSocket mmSocket;
 		private final InputStream mmInStream;
 		private final OutputStream mmOutStream;
-		private final NfcInterface mmNdefProxy;
+		private final NdefExchangeContract mmNdefProxy;
 		
 		private boolean mmIsWriteDone = false;
 		private boolean mmIsReadDone = false;
 		
-		public HandoverConnectedThread(DuplexSocket socket, NfcInterface ndefProxy) {
+		public HandoverConnectedThread(DuplexSocket socket, NdefExchangeContract ndefProxy) {
 			mmNdefProxy = ndefProxy;
 			mmSocket = socket;
 			InputStream tmpIn = null;

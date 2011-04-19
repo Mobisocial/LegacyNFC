@@ -1,4 +1,21 @@
-package mobisocial.nfc.ndefexchange;
+/*
+ * Copyright (C) 2011 Stanford University MobiSocial Lab
+ * http://mobisocial.stanford.edu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package mobisocial.nfc;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -6,34 +23,24 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import mobisocial.ndefexchange.NdefBluetoothPushHandover;
+import mobisocial.ndefexchange.NdefExchangeContract;
+import mobisocial.ndefexchange.NdefTcpPushHandover;
+
+import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.util.Log;
-
-import mobisocial.nfc.NdefHandler;
-import mobisocial.nfc.NfcInterface;
-import mobisocial.nfc.PrioritizedHandler;
+import android.widget.Toast;
 
 public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandler {
 	public static final String USER_HANDOVER_PREFIX = "ndef://wkt:hr/";
 	public static final String TAG = "connectionhandover";
 	public static final int HANDOVER_PRIORITY = 5;
 	private final Set<ConnectionHandover> mmConnectionHandovers = new LinkedHashSet<ConnectionHandover>();
-	private final NfcInterface mNfc;
-	private final NdefHandler mNdefHandler; // TODO hack
-	
-	public ConnectionHandoverManager(NfcInterface nfc) {
-		mNfc = nfc;
-		mNdefHandler = new NdefHandler() {
-			@Override
-			public int handleNdef(NdefMessage[] ndefMessages) {
-				mNfc.handleNdef(ndefMessages);
-				return NDEF_CONSUME;
-			}
-		};
 
-		mmConnectionHandovers.add(new NdefBluetoothPushHandover());
-		mmConnectionHandovers.add(new NdefTcpPushHandover());
+	public ConnectionHandoverManager() {
+
 	}
 	
 	public void addConnectionHandover(ConnectionHandover handover) {
@@ -56,17 +63,23 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 		return mmConnectionHandovers;
 	}
 	
-	@Override
+	//@Override
 	public final int handleNdef(NdefMessage[] handoverRequest) {
 		// TODO: What does this mean?
-		return doHandover(handoverRequest[0], mNfc.getForegroundNdefMessage());
+		return doHandover(handoverRequest[0]);
 	}
 
-	public final int doHandover(NdefMessage handoverRequest, final NdefMessage outboundNdef) {
+	public final int doHandover(NdefMessage handoverRequest) {
 		if (!isHandoverRequest(handoverRequest)) {
 			return NDEF_PROPAGATE;
 		}
-		Log.d(TAG, "chm sending " + outboundNdef);
+
+		if (isUserspaceHandoverRequest(handoverRequest)) {
+			// TODO: Move to NdefFactory or similar
+			Uri uri = Uri.parse(new String(handoverRequest.getRecords()[0].getPayload()));
+			handoverRequest = NdefFactory.fromNdefUri(uri);
+		}
+
 		NdefRecord[] records = handoverRequest.getRecords();
 		for (int i = 2; i < records.length; i++) {
 			Iterator<ConnectionHandover> handovers = mmConnectionHandovers.iterator();
@@ -74,7 +87,8 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 				ConnectionHandover handover = handovers.next();
 				if (handover.supportsRequest(records[i])) {
 					try {
-						handover.doConnectionHandover(handoverRequest, i, outboundNdef, mNdefHandler);
+						Log.d(TAG, "Attempting handover " + handover);
+						handover.doConnectionHandover(handoverRequest, i);
 						return NDEF_CONSUME;
 					} catch (IOException e) {
 						Log.w(TAG, "Handover failed.", e);
@@ -87,7 +101,7 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 		return NDEF_PROPAGATE;
 	}
 
-	@Override
+	//@Override
 	public int getPriority() {
 		return HANDOVER_PRIORITY;
 	}
@@ -106,8 +120,13 @@ public class ConnectionHandoverManager implements NdefHandler, PrioritizedHandle
 			return true;
 		}
 
-		// User-space handover:
-		// TODO: Support uri profile
+		return isUserspaceHandoverRequest(ndef);
+	}
+
+	// User-space handover:
+	// TODO: Support uri profile
+	private static boolean isUserspaceHandoverRequest(NdefMessage ndef) {
+		NdefRecord[] records = (ndef).getRecords();
 		if (records.length > 0
 				&& records[0].getTnf() == NdefRecord.TNF_ABSOLUTE_URI
 				&& records[0].getPayload().length >= USER_HANDOVER_PREFIX.length()) {
