@@ -242,7 +242,8 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	    		Intent intent = uriRecord.getIntentForUri();
 	    		notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
-	    		notification.setLatestEventInfo(NfcBridgeService.this, MESSAGE_RECEIVED, "Click to visit webpage.", contentIntent);
+	    		notification.setLatestEventInfo(NfcBridgeService.this, MESSAGE_RECEIVED,
+	    				"Click to visit " + uriRecord.getUri() + ".", contentIntent);
 	    	} else if (firstRecord.getTnf() == NdefRecord.TNF_MIME_MEDIA) {
 	    		String webpage = null;
 				String androidReference = null;
@@ -289,7 +290,8 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		    		Intent intent = new Intent(Intent.ACTION_VIEW);
 		    		intent.setData(Uri.parse(webpage));
 		    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
-		    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.", "Click to visit webpage.", contentIntent);
+		    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.",
+		    				"Click to visit " + webpage + ".", contentIntent);
 				}
 			}
 	    	
