@@ -21,10 +21,26 @@
 
 
 <LinearLayout
+  android:orientation="horizontal"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+  android:layout_alignParentBottom="true"
+  android:id="@+id/auto_open_layout"
+  >
+<CheckBox
+  android:id="@+id/autolaunch"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:text="Automatically open safe content"
+/>
+
+</LinearLayout>
+
+<LinearLayout
 	android:orientation="horizontal"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:layout_alignParentBottom="true"
+	android:layout_above="@id/auto_open_layout"
 	android:id="@+id/pair_layout"
 	>
 <Button

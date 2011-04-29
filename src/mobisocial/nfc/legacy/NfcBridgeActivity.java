@@ -16,31 +16,40 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class NfcBridgeActivity extends Activity {
 	protected static final String TAG = "nfcserver";
 	protected static final String ACTION_UPDATE = "mobisocial.intent.UPDATE";
+	private static final String PREFERENCE_AUTOLAUNCH = "autolaunch";
 	protected static final int QR_NFC_PAIR = 345;
 	private TextView mStatusView = null;
 	private Button mToggleButton = null;
 	private Button mConfigButton = null;
 	private Button mPairButton = null;
+	private CheckBox mAutoOpenCheckBox = null;
 	private TextView mPairStatusView = null;
 	private static PendingNdefExchange mNdefExchange;
+	private SharedPreferences mPreferences;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        mPreferences = getSharedPreferences("main", 0);
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(ACTION_UPDATE);
         
@@ -49,7 +58,8 @@ public class NfcBridgeActivity extends Activity {
         mPairButton = (Button)findViewById(R.id.pair);
         mStatusView = (TextView)findViewById(R.id.status);
         mPairStatusView = (TextView)findViewById(R.id.paired);
-        
+        mAutoOpenCheckBox = (CheckBox)findViewById(R.id.autolaunch);
+
         mPairButton.setEnabled(false);
         mConfigButton.setEnabled(false);
     }
@@ -105,10 +115,22 @@ public class NfcBridgeActivity extends Activity {
     	}
     };
     
+    private OnCheckedChangeListener mAutoLaunchListener = new OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        Editor editor = mPreferences.edit();
+        editor.putBoolean(PREFERENCE_AUTOLAUNCH, isChecked);
+        editor.commit();
+        mBoundService.setAutoLaunch(isChecked);
+      }
+    };
+    
     private void buildUi() {
     	mToggleButton.setOnClickListener(mToggleBridge);
         mConfigButton.setOnClickListener(mConfigListener);
         mPairButton.setOnClickListener(mPairListener);
+        mAutoOpenCheckBox.setChecked(mPreferences.getBoolean(PREFERENCE_AUTOLAUNCH, false));
+        mAutoOpenCheckBox.setOnCheckedChangeListener(mAutoLaunchListener);
 
     	if (!mBoundService.isBridgeRunning()) {
     		mStatusView.setText(R.string.bridge_not_running);
@@ -143,6 +165,7 @@ public class NfcBridgeActivity extends Activity {
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             mBoundService = ((NfcBridgeService.LocalBinder)service).getService();
+            mBoundService.setAutoLaunch(mPreferences.getBoolean(PREFERENCE_AUTOLAUNCH, false));
             buildUi();
         }
 
