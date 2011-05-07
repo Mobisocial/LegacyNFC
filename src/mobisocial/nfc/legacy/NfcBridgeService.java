@@ -24,10 +24,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -165,6 +167,8 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.hasExtra(EXTRA_NDEF_MESSAGES)) {
+				// Prepare an actionable NDEF exchange and notify user.
+				
 				Parcelable[] messages = intent.getParcelableArrayExtra(EXTRA_NDEF_MESSAGES);
 				mForegroundMessage = (NdefMessage)messages[0];
 				Log.d(TAG, "set NDEF with tnf " + mForegroundMessage.getRecords()[0].getTnf());
@@ -239,7 +243,11 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	    	}
 			if (UriRecord.isUri(firstRecord)) {
 	    		UriRecord uriRecord = UriRecord.parse(firstRecord);
-	    		Intent intent = uriRecord.getIntentForUri();
+	    		Intent intent = new Intent(NfcAdapter.ACTION_NDEF_DISCOVERED, uriRecord.getUri());
+                intent.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, messages);
+                if (null == getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)) {
+                    intent = uriRecord.getIntentForUri();
+                }
 	    		notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
 	    		notification.setLatestEventInfo(NfcBridgeService.this, MESSAGE_RECEIVED,
