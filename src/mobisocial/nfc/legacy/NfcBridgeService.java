@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import mobisocial.ndefexchange.NdefExchangeContract;
-import mobisocial.ndefexchange.PendingNdefExchange;
 import mobisocial.nfc.R;
 
 import com.android.apps.tag.record.UriRecord;
@@ -16,6 +15,7 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.PendingIntent.CanceledException;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -38,7 +38,7 @@ import android.widget.Toast;
 
 public class NfcBridgeService extends Service implements NdefExchangeContract {
 	private static final String EXTRA_NDEF_MESSAGES =  "android.nfc.extra.NDEF_MESSAGES";
-	
+
 	private static final String TAG = NfcBridgeActivity.TAG;
 	private static NfcBridge mNfcBridge = null;
 	private NotificationManager mNotificationManager;
@@ -48,6 +48,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	public static final String EXTRA_APPLICATION_ARGUMENT = "android.intent.extra.APPLICATION_ARGUMENT";
 	public static final String MESSAGE_RECEIVED = "Nfc message received.";
 
+	private boolean mAutoLaunchActivities = true;
 	private Intent mNotifyIntent;
 	private UUID mServiceUuid;
 	private NdefMessage mForegroundMessage;
@@ -136,6 +137,10 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	public String getBridgeReference() {
 		return (mNfcBridge == null) ? null : mNfcBridge.getReference();
 	}
+
+	public void setAutoLaunch(boolean doLaunch) {
+	  mAutoLaunchActivities = doLaunch;
+	}
 	
 	private final IBinder mBinder = new LocalBinder();
 
@@ -181,6 +186,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	    		sendIntent.putExtra("ndef", mForegroundMessage);
 	    		sendIntent.setPackage(getPackageName());
 	    		sendIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+
 	    		// sendIntent.setComponentName("mobisocial.vnfc", "mobisocial.indef.ShareActivity");
 	    		//intent.putExtra(EXTRA_NDEF_MESSAGES, messages);
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, sendIntent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -198,6 +204,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		}
 	};
 
+	@Override 
 	public int handleNdef(NdefMessage[] ndef) {
     	Intent handleNdefIntent = new Intent(ACTION_HANDLE_NDEF);
     	handleNdefIntent.putExtra(EXTRA_NDEF_MESSAGES, ndef);
@@ -249,7 +256,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
                     intent = uriRecord.getIntentForUri();
                 }
 	    		notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
-	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
+	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 	    		notification.setLatestEventInfo(NfcBridgeService.this, MESSAGE_RECEIVED,
 	    				"Click to visit " + uriRecord.getUri() + ".", contentIntent);
 	    	} else if (firstRecord.getTnf() == NdefRecord.TNF_MIME_MEDIA) {
@@ -290,22 +297,30 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		    			intent.setComponent(new ComponentName(info.packageName, info.name));
 		    			
 		    			notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
-		    			PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
+		    			PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 			    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.", "Click to launch application.", contentIntent);
 		    		}
 				} else if (webpage != null) {
 					notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 		    		Intent intent = new Intent(Intent.ACTION_VIEW);
 		    		intent.setData(Uri.parse(webpage));
-		    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, 0);
+		    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 		    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.",
 		    				"Click to visit " + webpage + ".", contentIntent);
 				}
 			}
 	    	
 	    	if (notification != null) {
-	    		notification.flags = Notification.FLAG_AUTO_CANCEL;
-	    		mNotificationManager.notify(0, notification);
+              if (mAutoLaunchActivities) {
+                try {
+                  notification.contentIntent.send();
+                  return;
+                } catch (CanceledException e) {
+                  
+                }
+              }
+              notification.flags = Notification.FLAG_AUTO_CANCEL;
+              mNotificationManager.notify(0, notification);
 	    	}
 		}
 	};
@@ -321,5 +336,9 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 
 	public void share(Object shared) {
 		throw new UnsupportedOperationException("Sharing not available.");
+	}
+
+	private void toast(String text) {
+	  Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
 	}
 }
