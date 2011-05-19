@@ -11,6 +11,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 import mobisocial.ndefexchange.NdefExchangeContract;
+import mobisocial.ndefexchange.StreamDuplexSocket;
 
 import android.nfc.NdefMessage;
 import android.util.Log;
@@ -42,7 +43,7 @@ public class NfcTcpBridge implements NfcBridge {
 			return;
 		}
 
-		System.out.println("Server running on " + ip + ":" + SERVER_PORT + ".");
+		Log.d(TAG, "Server running on " + ip + ":" + SERVER_PORT + ".");
 		mAcceptThread = new AcceptThread();
 		mAcceptThread.start();
 	}
@@ -96,7 +97,14 @@ public class NfcTcpBridge implements NfcBridge {
 					break;
 				}
 
-				ConnectedThread conThread = new ConnectedThread(socket);
+				StreamDuplexSocket duplexStream;
+				try {
+				    duplexStream = new StreamDuplexSocket(socket.getInputStream(), socket.getOutputStream());
+				} catch (IOException e) {
+				    Log.w(TAG, "Error connecting to stream");
+				    continue;
+				}
+				HandoverConnectedThread conThread = new HandoverConnectedThread(duplexStream, mNdefReceiver);
 				conThread.start();
 			}
 			Log.d(TAG, "END mAcceptThread");
@@ -108,65 +116,6 @@ public class NfcTcpBridge implements NfcBridge {
 				mmServerSocket.close();
 			} catch (IOException e) {
 				Log.e(TAG, "close() of server failed", e);
-			}
-		}
-	}
-
-	/**
-	 * This thread runs during a connection with a remote device. It handles all
-	 * incoming and outgoing transmissions.
-	 */
-	private class ConnectedThread extends Thread {
-		private final Socket mmSocket;
-		private final InputStream mmInStream;
-		private final OutputStream mmOutStream;
-		private final int BUFFER_LENGTH = 2048;
-
-		public ConnectedThread(Socket socket) {
-			// Log.d(TAG, "create ConnectedThread");
-
-			mmSocket = socket;
-			InputStream tmpIn = null;
-			OutputStream tmpOut = null;
-
-			try {
-				tmpIn = socket.getInputStream();
-				tmpOut = socket.getOutputStream();
-			} catch (IOException e) {
-				Log.e(TAG, "temp sockets not created", e);
-			}
-
-			mmInStream = tmpIn;
-			mmOutStream = tmpOut;
-		}
-
-		public void run() {
-			// Log.d(TAG, "BEGIN mConnectedThread");
-			byte[] buffer = new byte[BUFFER_LENGTH];
-			int bytes;
-
-			if (mmInStream == null || mmOutStream == null)
-				return;
-
-			// Read header information, determine connection type
-			try {
-				bytes = mmInStream.read(buffer);
-				byte[] ndefBytes = new byte[bytes];
-				System.arraycopy(buffer, 0, ndefBytes, 0, bytes);
-				NdefMessage ndefMessage = new NdefMessage(ndefBytes);
-				mNdefReceiver.handleNdef(new NdefMessage[] {ndefMessage});
-			} catch (Exception e) {
-				Log.e(TAG, "Error reading connection header", e);
-			}
-
-			// No longer listening.
-			cancel();
-		}
-
-		public void cancel() {
-			try {
-				mmSocket.close();
-			} catch (IOException e) {
 			}
 		}
 	}
