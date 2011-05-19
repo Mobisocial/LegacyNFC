@@ -106,6 +106,7 @@ public class NdefExchangeThread extends Thread {
 		@Override
 		public void run() {
 			try {
+				// TODO: Take a message as a constructor parameter.
 				NdefMessage outbound = mmNfcInterface.getForegroundNdefMessage();
 				DataOutputStream dataOut = new DataOutputStream(mmOutStream);
 				dataOut.writeByte(HANDOVER_VERSION);
