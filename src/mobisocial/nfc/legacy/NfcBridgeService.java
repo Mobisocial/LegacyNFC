@@ -111,6 +111,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		}
 			
 		mNfcBridge = new NfcBluetoothBridge(this, mServiceUuid);
+		//mNfcBridge = new NfcTcpBridge(this);
 		mNfcBridge.start();
 		sendBroadcast(mNotifyIntent);
 		startSelf();
@@ -278,7 +279,8 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 						break;
 					}
 				}
-				
+
+				boolean foundMatch = false;
 				if (androidReference != null) {
 					int col = androidReference.indexOf(":");
 		    		String pkg = androidReference.substring(0, col);
@@ -291,21 +293,25 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		    		
 		    		// TODO: support applications that aren't yet installed.
 		    		List<ResolveInfo> resolved = getPackageManager().queryIntentActivities(intent, 0);
-		    		if (resolved.size() > 0) {
+                    if (resolved != null && resolved.size() > 0) {
 		    			ActivityInfo info = resolved.get(0).activityInfo;
 		    			intent.setComponent(new ComponentName(info.packageName, info.name));
 		    			
 		    			notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 		    			PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 			    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.", "Click to launch application.", contentIntent);
+                        foundMatch = true;
 		    		}
-				} else if (webpage != null) {
+				}
+
+				if (!foundMatch && webpage != null) {
 					notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 		    		Intent intent = new Intent(Intent.ACTION_VIEW);
 		    		intent.setData(Uri.parse(webpage));
 		    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 		    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.",
 		    				"Click to visit " + webpage + ".", contentIntent);
+                    foundMatch = true;
 				}
 			}
 	    	
