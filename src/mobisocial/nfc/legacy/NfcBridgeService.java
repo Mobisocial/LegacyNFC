@@ -85,7 +85,6 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	
 	@Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-		startForeground(0, null);
         return START_STICKY;
     }
 	
