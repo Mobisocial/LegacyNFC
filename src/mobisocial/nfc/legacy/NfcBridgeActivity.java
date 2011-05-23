@@ -39,8 +39,8 @@ public class NfcBridgeActivity extends Activity {
 	private Button mToggleButton = null;
 	private Button mConfigButton = null;
 	private Button mPairButton = null;
+	private Button mFriendsButton = null;
 	private CheckBox mAutoOpenCheckBox = null;
-	private TextView mPairStatusView = null;
 	private static PendingNdefExchange mNdefExchange;
 	private SharedPreferences mPreferences;
 	
@@ -54,14 +54,17 @@ public class NfcBridgeActivity extends Activity {
         mIntentFilter.addAction(ACTION_UPDATE);
         
         mToggleButton = (Button)findViewById(R.id.toggle);
+        mFriendsButton = (Button)findViewById(R.id.friends);
         mConfigButton = (Button)findViewById(R.id.config);
         mPairButton = (Button)findViewById(R.id.pair);
         mStatusView = (TextView)findViewById(R.id.status);
-        mPairStatusView = (TextView)findViewById(R.id.paired);
         mAutoOpenCheckBox = (CheckBox)findViewById(R.id.autolaunch);
 
         mPairButton.setEnabled(false);
         mConfigButton.setEnabled(false);
+
+        mFriendsButton.setOnClickListener(mFriendsLauncher);
+        mFriendsButton.setVisibility(View.GONE);
     }
     
     @Override
@@ -86,6 +89,12 @@ public class NfcBridgeActivity extends Activity {
     			mBoundService.enableBridge();
     		}
     	}
+    };
+
+    private View.OnClickListener mFriendsLauncher = new View.OnClickListener() {
+        public void onClick(View v) {
+            startActivity(new Intent(NfcBridgeActivity.this, FriendsActivity.class));
+        }
     };
 
     private View.OnClickListener mConfigListener= new View.OnClickListener() {
@@ -135,6 +144,8 @@ public class NfcBridgeActivity extends Activity {
     	if (!mBoundService.isBridgeRunning()) {
     		mStatusView.setText(R.string.bridge_not_running);
     		mToggleButton.setText(R.string.enable_bridge);
+    		mPairButton.setEnabled(false);
+            mConfigButton.setEnabled(false);
     	} else {
     		mStatusView.setText("Bridge running on " + mBoundService.getBridgeReference());
     		mPairButton.setEnabled(true);

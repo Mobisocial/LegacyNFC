@@ -6,19 +6,12 @@
     >
 
 <Button
-	android:id="@+id/toggle"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:text="Enable Nfc"
-/>
-
-<TextView
-	android:id="@+id/status"
+	android:id="@+id/friends"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:layout_below="@id/toggle"
+	android:text="Friendship Bar!"
+	android:layout_alignParentTop="true"
 />
-
 
 <LinearLayout
   android:orientation="horizontal"
@@ -33,7 +26,6 @@
   android:layout_height="wrap_content"
   android:text="Automatically open safe content"
 />
-
 </LinearLayout>
 
 <LinearLayout
@@ -47,22 +39,30 @@
 	android:id="@+id/pair"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Set Quick-Tap Device"
+	android:text="Set Quick-Share Device"
 />
 
 <Button
 	android:id="@+id/config"
-	android:layout_width="wrap_content"
+	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:text="Show Configuration"
 />
 </LinearLayout>
 
-<TextView
-	android:id="@+id/paired"
+<Button
+	android:id="@+id/toggle"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
+	android:text="Enable vNfc"
 	android:layout_above="@id/pair_layout"
+/>
+
+<TextView
+	android:id="@+id/status"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_above="@id/toggle"
 />
 
 </RelativeLayout>

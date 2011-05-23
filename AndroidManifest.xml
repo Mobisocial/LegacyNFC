@@ -20,6 +20,10 @@
         	</intent-filter>
         </activity>
 
+		<activity android:name=".legacy.FriendsActivity" android:taskAffinity="">
+
+        </activity>
+
 		<service android:name=".legacy.NfcBridgeService" />
     </application>
 
