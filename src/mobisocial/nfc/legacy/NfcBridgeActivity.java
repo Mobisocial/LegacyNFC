@@ -64,7 +64,7 @@ public class NfcBridgeActivity extends Activity {
         mConfigButton.setEnabled(false);
 
         mFriendsButton.setOnClickListener(mFriendsLauncher);
-        mFriendsButton.setVisibility(View.GONE);
+        //mFriendsButton.setVisibility(View.GONE);
     }
     
     @Override

@@ -62,7 +62,6 @@ public class NfcBluetoothBridge implements NfcBridge {
 
 			// Create a new listening server socket
 			try {
-				// TODO: Wrapper. See libhotpotato NfcWrapper.
 				if (VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD_MR1) {
 					tmp = mBtAdapter.listenUsingInsecureRfcommWithServiceRecord("NfcHandover", mServiceUuid);
 				} else {

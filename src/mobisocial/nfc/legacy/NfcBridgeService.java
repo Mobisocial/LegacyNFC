@@ -176,11 +176,9 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 				
 				Parcelable[] messages = intent.getParcelableArrayExtra(EXTRA_NDEF_MESSAGES);
 				mForegroundMessage = (NdefMessage)messages[0];
-				Log.d(TAG, "set NDEF with tnf " + mForegroundMessage.getRecords()[0].getTnf());
-				
 				Notification notification = new Notification(R.drawable.stat_sys_nfc, null, System.currentTimeMillis());
 				
-				Log.d(TAG, "TODO: use data field with ndef://wkt:hr/[base64]");
+				//Log.d(TAG, "TODO: use data field with ndef://wkt:hr/[base64]");
 				//Uri ndef = new Uri.Builder().scheme("ndef").authority("wkt:ndef").appendEncodedPath(arg0)
 	    		Intent sendIntent = new Intent(Intent.ACTION_SEND);
 	    		sendIntent.putExtra("ndef", mForegroundMessage);
