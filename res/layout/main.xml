@@ -13,6 +13,26 @@
 	android:layout_alignParentTop="true"
 />
 
+<LinearLayout android:orientation="horizontal"
+    android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:layout_below="@id/friends"
+	android:id="@+id/enable_bar">
+<Button
+	android:id="@+id/toggle"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Enable vNfc"
+/>
+
+<Button
+	android:id="@+id/toggleTcp"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="Enable Tcp"
+/>
+</LinearLayout>
+
 <LinearLayout
   android:orientation="horizontal"
   android:layout_width="fill_parent"
@@ -47,22 +67,16 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:text="Show Configuration"
-/>
-</LinearLayout>
-
-<Button
-	android:id="@+id/toggle"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:text="Enable vNfc"
 	android:layout_above="@id/pair_layout"
 />
+</LinearLayout>
 
 <TextView
 	android:id="@+id/status"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:layout_above="@id/toggle"
+	android:text="LegacyNfc not running."
+	android:layout_above="@id/pair_layout"
 />
 
 </RelativeLayout>

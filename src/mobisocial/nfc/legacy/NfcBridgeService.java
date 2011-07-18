@@ -103,10 +103,22 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
             return NfcBridgeService.this;
         }
     }
+
+	public synchronized void enableTcpBridge() {
+	    if (mNfcBridge != null) {
+            Log.w(TAG, "Tcp bridge already running.");
+            return;
+        }
+            
+        mNfcBridge = new NfcTcpBridge(this);
+        mNfcBridge.start();
+        sendBroadcast(mNotifyIntent);
+        startSelf();
+	}
 	
 	public synchronized void enableBridge() {
 		if (mNfcBridge != null) {
-			Log.w(TAG, "Nfc bridge already running.");
+			Log.w(TAG, "Bt bridge already running.");
 			return;
 		}
 			

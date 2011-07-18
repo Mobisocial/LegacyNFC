@@ -37,6 +37,7 @@ public class NfcBridgeActivity extends Activity {
 	protected static final int QR_NFC_PAIR = 345;
 	private TextView mStatusView = null;
 	private Button mToggleButton = null;
+	private Button mToggleTcpButton = null;
 	private Button mConfigButton = null;
 	private Button mPairButton = null;
 	private Button mFriendsButton = null;
@@ -54,6 +55,7 @@ public class NfcBridgeActivity extends Activity {
         mIntentFilter.addAction(ACTION_UPDATE);
         
         mToggleButton = (Button)findViewById(R.id.toggle);
+        mToggleTcpButton = (Button)findViewById(R.id.toggleTcp);
         mFriendsButton = (Button)findViewById(R.id.friends);
         mConfigButton = (Button)findViewById(R.id.config);
         mPairButton = (Button)findViewById(R.id.pair);
@@ -89,6 +91,17 @@ public class NfcBridgeActivity extends Activity {
     			mBoundService.enableBridge();
     		}
     	}
+    };
+
+    private View.OnClickListener mToggleTcpBridge = new View.OnClickListener() {
+        public void onClick(View v) {
+            
+            if (mBoundService.isBridgeRunning()) {
+                mBoundService.disableBridge();
+            } else {
+                mBoundService.enableTcpBridge();
+            }
+        }
     };
 
     private View.OnClickListener mFriendsLauncher = new View.OnClickListener() {
@@ -136,6 +149,7 @@ public class NfcBridgeActivity extends Activity {
     
     private void buildUi() {
     	mToggleButton.setOnClickListener(mToggleBridge);
+    	mToggleTcpButton.setOnClickListener(mToggleTcpBridge);
         mConfigButton.setOnClickListener(mConfigListener);
         mPairButton.setOnClickListener(mPairListener);
         mAutoOpenCheckBox.setChecked(mPreferences.getBoolean(PREFERENCE_AUTOLAUNCH, false));
