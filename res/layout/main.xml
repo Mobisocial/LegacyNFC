@@ -11,6 +11,7 @@
 	android:layout_height="wrap_content"
 	android:text="Friendship Bar!"
 	android:layout_alignParentTop="true"
+	android:visibility="gone"
 />
 
 <LinearLayout android:orientation="horizontal"
