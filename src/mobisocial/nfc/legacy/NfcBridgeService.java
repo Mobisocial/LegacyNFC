@@ -1,5 +1,10 @@
 package mobisocial.nfc.legacy;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +36,7 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.util.Log;
@@ -38,6 +44,7 @@ import android.widget.Toast;
 
 public class NfcBridgeService extends Service implements NdefExchangeContract {
 	private static final String EXTRA_NDEF_MESSAGES =  "android.nfc.extra.NDEF_MESSAGES";
+	private static final byte[] RTD_APP_MANIFEST = "application/vnd.mobisocial-appmanifest".getBytes();
 
 	private static final String TAG = NfcBridgeActivity.TAG;
 	private static NfcBridge mNfcBridge = null;
@@ -52,6 +59,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	private Intent mNotifyIntent;
 	private UUID mServiceUuid;
 	private NdefMessage mForegroundMessage;
+	private static final String ROOT_DIR = "legacynfc";
 	
 	private static NfcBridgeService sInstance;
 	// TODO: this is a hack.
@@ -185,7 +193,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.hasExtra(EXTRA_NDEF_MESSAGES)) {
 				// Prepare an actionable NDEF exchange and notify user.
-				
+				Log.d(TAG, "Handling received ndef.");
 				Parcelable[] messages = intent.getParcelableArrayExtra(EXTRA_NDEF_MESSAGES);
 				mForegroundMessage = (NdefMessage)messages[0];
 				Notification notification = new Notification(R.drawable.stat_sys_nfc, null, System.currentTimeMillis());
@@ -216,6 +224,7 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 
 	@Override 
 	public int handleNdef(NdefMessage[] ndef) {
+	    Log.d(TAG, "broadcasting receipt of ndef");
     	Intent handleNdefIntent = new Intent(ACTION_HANDLE_NDEF);
     	handleNdefIntent.putExtra(EXTRA_NDEF_MESSAGES, ndef);
     	sendOrderedBroadcast(handleNdefIntent, "android.permission.NFC", mNdefRouter, null, Activity.RESULT_OK, null, null);
@@ -253,14 +262,26 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	    		// addToKnownHandovers()
 	    		// then, when sharing, use this list to send ndef.
 	    	if (firstRecord.getTnf() == NdefRecord.TNF_WELL_KNOWN) {
-	    		if (/*ConnectionHandoverManager.*/isHandoverRequest(ndef)) {
+	    		if (isHandoverRequest(ndef)) {
 	    			// mTargetHandover = ndef;
-	    			
 	    		}	
 	    	}
 			if (UriRecord.isUri(firstRecord)) {
 	    		UriRecord uriRecord = UriRecord.parse(firstRecord);
-	    		Intent intent = new Intent(NfcAdapter.ACTION_NDEF_DISCOVERED, uriRecord.getUri());
+
+	    		final Uri uri = uriRecord.getUri();
+	    		// handle certain types directly
+                final String type = typeFromUri(uri);
+                if (type != null) {
+                    // TODO, download the file
+                    new Thread() {
+                        public void run() {
+                            handleFileFromUri(type, uri);                            
+                        };
+                    }.start();
+                    return;
+                }
+	    		Intent intent = new Intent(NfcAdapter.ACTION_NDEF_DISCOVERED, uri);
                 intent.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, messages);
                 if (null == getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)) {
                     intent = uriRecord.getIntentForUri();
@@ -269,7 +290,8 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 	    		PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 	    		notification.setLatestEventInfo(NfcBridgeService.this, MESSAGE_RECEIVED,
 	    				"Click to visit " + uriRecord.getUri() + ".", contentIntent);
-	    	} else if (firstRecord.getTnf() == NdefRecord.TNF_MIME_MEDIA) {
+	    	} else if (firstRecord.getTnf() == NdefRecord.TNF_MIME_MEDIA &&
+	    	        Arrays.equals(firstRecord.getType(), RTD_APP_MANIFEST)) {
 	    		String webpage = null;
 				String androidReference = null;
 
@@ -295,18 +317,18 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 					int col = androidReference.indexOf(":");
 		    		String pkg = androidReference.substring(0, col);
 		    		String arg = androidReference.substring(col+1);
-		    		
+
 		    		Intent intent = new Intent(Intent.ACTION_MAIN);
 		    		intent.addCategory(Intent.CATEGORY_LAUNCHER);
 		    		intent.setPackage(pkg);
 		    		intent.putExtra(EXTRA_APPLICATION_ARGUMENT, arg);
-		    		
+
 		    		// TODO: support applications that aren't yet installed.
 		    		List<ResolveInfo> resolved = getPackageManager().queryIntentActivities(intent, 0);
                     if (resolved != null && resolved.size() > 0) {
 		    			ActivityInfo info = resolved.get(0).activityInfo;
 		    			intent.setComponent(new ComponentName(info.packageName, info.name));
-		    			
+
 		    			notification = new Notification(R.drawable.stat_sys_nfc, MESSAGE_RECEIVED, System.currentTimeMillis());
 		    			PendingIntent contentIntent = PendingIntent.getActivity(NfcBridgeService.this, 0, intent, Intent.FLAG_ACTIVITY_NEW_TASK);
 			    		notification.setLatestEventInfo(NfcBridgeService.this, "Nfc message received.", "Click to launch application.", contentIntent);
@@ -355,5 +377,65 @@ public class NfcBridgeService extends Service implements NdefExchangeContract {
 
 	private void toast(String text) {
 	  Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+	}
+
+	private String typeFromUri(Uri uri) {
+	    String str = uri.toString();
+	    int dot = str.lastIndexOf(".");
+	    if (dot == -1) {
+	        return null;
+	    }
+	    String suffix = str.substring(dot + 1);
+	    if (suffix.equals("m3u")) {
+	        return "audio/x-mpegurl";
+	    }
+	    return null;
+	}
+
+	private synchronized void handleFileFromUri(String type, Uri uri) {
+	    File tempFile = null;
+	    Log.d(TAG, "downloading nfc delivered content: " + uri);
+	    File dlDir = new File(Environment.getExternalStorageDirectory(), ROOT_DIR);
+        if (!dlDir.exists()) {
+            dlDir.mkdir();
+        }
+
+        try {
+            tempFile = File.createTempFile("ndef", ".tmp", dlDir);
+            tempFile.deleteOnExit();
+        } catch (IOException e) {
+            Log.e(TAG, "could not create temporary file", e);
+        }
+
+        boolean cancelCurrentDownload = false;
+        try {
+            FileOutputStream out = new FileOutputStream(tempFile);
+            URL dlURL = new URL(uri.toString());
+            InputStream in = dlURL.openStream();
+            byte[] buf = new byte[4 * 1024];
+            int bytesRead;
+            while (!cancelCurrentDownload && (bytesRead = in.read(buf)) != -1) {
+              out.write(buf, 0, bytesRead);
+            }
+            in.close();
+            out.close();
+           
+            if (cancelCurrentDownload) {
+                tempFile.delete();
+                cancelCurrentDownload = false;
+            } else {
+                Intent view = new Intent(Intent.ACTION_VIEW);
+                view.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                view.setDataAndType(Uri.fromFile(tempFile), type);
+                startActivity(view);
+            }
+        } catch (Exception e) {
+            Log.e(TAG,"failed to download file " + uri, e);
+            if (tempFile != null) {
+                try {
+                    tempFile.delete();
+                } catch (Exception e2) {}
+            }
+        }
 	}
 }

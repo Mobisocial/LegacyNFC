@@ -81,7 +81,7 @@ public class NdefExchangeThread extends Thread {
 					read += dataIn.read(ndefBytes, read, (length - read));
 				}
 				NdefMessage ndef = new NdefMessage(ndefBytes);
-				mmNfcInterface.handleNdef(new NdefMessage[] {ndef});
+				mmNfcInterface.handleNdef(new NdefMessage[]{ndef});
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "Failed to issue handover.", e);
@@ -106,7 +106,6 @@ public class NdefExchangeThread extends Thread {
 		@Override
 		public void run() {
 			try {
-				// TODO: Take a message as a constructor parameter.
 				NdefMessage outbound = mmNfcInterface.getForegroundNdefMessage();
 				DataOutputStream dataOut = new DataOutputStream(mmOutStream);
 				dataOut.writeByte(HANDOVER_VERSION);

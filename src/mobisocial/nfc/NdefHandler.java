@@ -35,5 +35,5 @@ public interface NdefHandler {
 	 *         given message, or {@link #NDEF_PROPAGATE} to pass on to the next
 	 *         handler.
 	 */
-	public int handleNdef(NdefMessage[] ndefMessages);
+	public abstract int handleNdef(NdefMessage[] ndefMessages);
 }
